@@ -7,6 +7,9 @@ A header only Linear Algebra library implemented in modern C++.  Constexpr compa
 - **Pos**<Size, Type>
 - **Ray**<Size, Type>
 - **Mat**<Size, Size, Type>
+- **Quat**/<Type>
+- **Degees**
+- **Radians**
 - **Sphere3D**\<Type>
 - **Triangle3D**\<Type>
 
@@ -37,11 +40,12 @@ A header only Linear Algebra library implemented in modern C++.  Constexpr compa
     - transpose(**Mat**) -> **Mat**
     - deteminant(**Mat**) -> **Scalar**
     - getRotationMat3x3(**Scalar**, **Scalar**, **Scalar**) -> **Mat**
+- **Quat**
+    - toVec() -> **Vec**
 - **Sphere3D**
     - getNormalVec(**Pos**, **Sphere3D**) -> **Vec**
     - intersectionDist(**Ray**, **Sphere3D**) -> **Scalar**
-- ***Misc***
-    - toRadians(**Scalar**) -> **Scalar** 
+
 
 ### To Do
 - Triangle Intersections
