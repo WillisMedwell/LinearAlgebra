@@ -43,13 +43,12 @@ constexpr T factorial(T n)
 template <typename T>
 constexpr T pow(T x, T exponent)
 {
-    if consteval {
+    if (std::is_constant_evaluated()) {
         T result = 1.0;
         for (T i = 0; i < exponent; ++i) {
             result *= x;
         }
         return result;
-
     } else {
         return std::pow(x, exponent);
     }
@@ -83,7 +82,7 @@ Cosine function, input unit is radians.
 template <typename T>
 constexpr T cos(T x)
 {
-    if consteval {
+    if (std::is_constant_evaluated()) {
         if (x == 0) {
             return 1;
         }
@@ -106,7 +105,7 @@ Sine function, input unit is radians.
 template <typename T>
 constexpr T sin(T x)
 {
-    if consteval {
+    if (std::is_constant_evaluated()) {
         if (x == 0) {
             return 0;
         }
@@ -123,9 +122,13 @@ constexpr T sin(T x)
 }
 
 template <typename T>
-T tan(T x)
+constexpr T tan(T x)
 {
-    return static_cast<T>(std::tan(x));
+    if (std::is_constant_evaluated()) {
+        return LinearAlgebra::sin<T>(x) / LinearAlgebra::cos<T>(x);
+    } else {
+        return static_cast<T>(std::tan(x));
+    }
 }
 
 template <size_t N, typename T>
@@ -504,6 +507,23 @@ public:
         return out;
     }
 
+    template <size_t R2, size_t C2>
+    constexpr Mat<R, C2> operator*(const Mat<R2, C2, T>& b) const
+    {
+        const auto& a = *this;
+        Mat<R, C2, T> c {};
+        for (size_t row = 0; row < R; ++row) {
+            for (size_t col = 0; col < C2; ++col) {
+                T value = {};
+                for (size_t i = 0; i < C; ++i) {
+                    value += a[row][i] * b[i][col];
+                }
+                c[row][col] = value;
+            }
+        }
+        return c;
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const Mat<R, C, T>& mat)
     {
         os << '[';
@@ -519,29 +539,6 @@ public:
     }
 };
 
-/*
-Multiply applicable Matrices, and Vectors.
-*/
-template <size_t R1, size_t C1, size_t R2, size_t C2, typename T>
-constexpr Mat<R1, C2, T> dotProduct(const Mat<R1, C1, T>& a, const Mat<R2, C2, T>& b)
-{
-    static_assert(C1 == R2, "Unable to compute this matrix");
-    Mat<R1, C2, T> c {};
-    for (size_t row = 0; row < R1; ++row) {
-        for (size_t col = 0; col < C2; ++col) {
-            T value = {};
-            for (size_t i = 0; i < C1; ++i) {
-                value += a[row][i] * b[i][col];
-            }
-            c[row][col] = value;
-        }
-    }
-    return c;
-}
-
-/*
-Multiply applicable Matrices, and Vectors.
-*/
 template <size_t R, size_t C, size_t N, typename T>
 constexpr Vec<N, T> dotProduct(const Mat<R, C, T>& mat, const Vec<N, T>& vec)
 {
@@ -558,18 +555,22 @@ constexpr Vec<N, T> dotProduct(const Mat<R, C, T>& mat, const Vec<N, T>& vec)
     return output;
 }
 
-/*
-Multiply applicable Matrices, and Vectors.
-*/
 template <size_t R, size_t C, size_t N, typename T>
 constexpr Vec<N, T> dotProduct(const Vec<N, T>& vec, const Mat<R, C, T>& mat)
 {
-    return dotProduct(mat, vec);
+    static_assert(N == C, "Incompatible operation");
+    Vec<R, T> output;
+
+    for (size_t col = 0; col < C; ++col) {
+        T value = {};
+        for (size_t row = 0; row < R; ++row) {
+            value += mat[row][col] * vec[row];
+        }
+        output[col] = value;
+    }
+    return output;
 }
 
-/*
-Multiply applicable Matrices, and Vectors.
-*/
 template <size_t N, typename T>
 constexpr T dotProduct(const Vec<N, T>& vec1, const Vec<N, T>& vec2)
 {
@@ -659,27 +660,35 @@ Generate the rotation Matrix with the inputs of yaw, pitch, and roll.
 (Input units are in radians).
 */
 template <typename T>
-constexpr Mat<3, 3, T> getRotationMat3x3(T yaw_radians, T pitch_radians, T roll_radians)
+constexpr Mat<3, 3, T> getRotationMat3x3(T x_rotation_radians, T y_rotation_radians, T z_rotation_radians)
 {
-    Mat<3, 3, T> yaw_mat({ { LinearAlgebra::cos(roll_radians), -LinearAlgebra::sin(roll_radians), 0 },
-        { LinearAlgebra::sin(roll_radians), LinearAlgebra::cos(roll_radians), 0 },
-        { 0, 0, 1 } });
+    const T x = x_rotation_radians;
+    const T y = y_rotation_radians;
+    const T z = z_rotation_radians;
 
-    Mat<3, 3, T> pitch_mat({ { LinearAlgebra::cos(pitch_radians), 0, LinearAlgebra::sin(pitch_radians) },
-        { 0, 1, 0 },
-        { -LinearAlgebra::sin(pitch_radians), 0, LinearAlgebra::cos(pitch_radians) } });
+    namespace LA = LinearAlgebra;
 
-    Mat<3, 3, T> roll_mat({ { 1, 0, 0 },
-        { 0, LinearAlgebra::cos(yaw_radians), -LinearAlgebra::sin(yaw_radians) },
-        { 0, LinearAlgebra::sin(yaw_radians), LinearAlgebra::cos(yaw_radians) } });
+    Mat<3, 3, T> x_rot_mat(
+        { { 1, 0, 0 },
+            { 0, LA::cos(x), -LA::sin(x) },
+            { 0, LA::sin(x), LA::cos(x) } });
 
-    return dotProduct(roll_mat, dotProduct(yaw_mat, pitch_mat));
+    Mat<3, 3, T> y_rot_mat(
+        { { LA::cos(y), 0, LA::sin(y) },
+            { 0, 1, 0 },
+            { -LA::sin(y), 0, LA::cos(y) } });
+
+    Mat<3, 3, T> z_rot_mat(
+        { { LA::cos(z), -LA::sin(z), 0 },
+            { LA::sin(z), LA::cos(z), 0 },
+            { 0, 0, 1 } });
+
+    return z_rot_mat * y_rot_mat * x_rot_mat;
 }
 
 template <typename T>
 Vec<3, T> getRotatedVec3(const Vec<3, T>& vec, T yaw_radians, T pitch_radians, T roll_radians)
 {
-
     // Apply the rotation matrix to the input vector
     return dotProduct(getRotationMat3x3(yaw_radians, pitch_radians, roll_radians), vec);
 }

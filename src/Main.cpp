@@ -82,9 +82,45 @@ consteval bool testMatOps()
 {
     using namespace LinearAlgebra;
     bool has_passed = true;
-    {
-        LinearAlgebra::Mat<3, 3> in1({ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
-    }
+
+    // Initializer list constructor and access
+    Mat<3, 3> in1({ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
+    Mat<3, 3> in2({ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
+    Mat<3, 3> in3({ { 1, 2, 4 }, { 4, 5, 6 }, { 7, 8, 9 } });
+
+    // Equality checks
+    has_passed &= in1 == in2;
+    has_passed &= in1 != in3;
+
+    // Scalar multiplication
+    Mat<3, 3> out1({ { 2, 4, 6 }, { 8, 10, 12 }, { 14, 16, 18 } });
+    has_passed &= out1 == (in1 * 2);
+
+    // Matrix-matrix multiplication
+    Mat<3, 3> in4({ { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } });
+    Mat<3, 3> out2({ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
+    has_passed &= out2 == (in1 * in4);
+
+    // Identity matrix multiplication
+    Mat<2, 2> id2({ { 1, 0 }, { 0, 1 } });
+    Mat<2, 2> rand2({ { 3, 2 }, { 1, 4 } });
+    has_passed &= rand2 == (id2 * rand2);
+    has_passed &= rand2 == (rand2 * id2);
+
+    // More complex multiplication
+    Mat<3, 3> m1({ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
+    Mat<3, 3> m2({ { 10, 11, 12 }, { 13, 14, 15 }, { 16, 17, 18 } });
+    Mat<3, 3> m3({ { 84, 90, 96 }, { 201, 216, 231 }, { 318, 342, 366 } });
+    has_passed &= m3 == (m1 * m2);
+
+    // Empty constructor
+    Mat<3, 3> empty;
+    has_passed &= empty[0][0] == 0 && empty[2][2] == 0; // checking some elements to be zero
+
+    // Size inequality check
+    Mat<2, 3> in5({ { 1, 2, 3 }, { 4, 5, 6 } });
+    has_passed &= in5 != in1;
+
     return has_passed;
 }
 
@@ -104,9 +140,63 @@ consteval bool testRayOps()
     return has_passed;
 }
 
+consteval bool testMatRotOps()
+{
+    using namespace LinearAlgebra;
+    bool has_passed = true;
+
+    // Test for zero rotation
+    {
+        Mat<3, 3> rotMat = getRotationMat3x3<float>(0.0, 0.0, 0.0);
+        Vec<3> vec(1, 0, 0);
+        Vec<3> result = dotProduct(rotMat, vec);
+        has_passed &= result == vec;
+    }
+
+    // Test for a 90-degree rotation around the Z-axis
+    {
+        Mat<3, 3> rotMat = getRotationMat3x3<float>(0.0, 0.0, toRadians(90));
+        Vec<3> vec(1, 0, 0);
+        Vec<3> expected_result(0, 1, 0);
+        Vec<3> result = dotProduct(rotMat, vec);
+        has_passed &= result == expected_result;
+    }
+
+    // Test for a 180-degree rotation around the Y-axis
+    {
+        Mat<3, 3, float> rotMat = getRotationMat3x3<float>(0.0, toRadians(180), 0.0);
+        Vec<3, float> vec(1, 0, 0);
+        Vec<3, float> expected_result(-1, 0, 0);
+        Vec<3, float> result = dotProduct(rotMat, vec);
+        has_passed &= result == expected_result;
+    }
+
+    return has_passed;
+}
+
+consteval bool testMatVecOps()
+{
+    namespace LA = LinearAlgebra;
+    bool has_passed = true;
+    {
+        LA::Mat<3, 3, float> mat({ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
+        LA::Vec<3, float> vec { 1, 2, 3 };
+        LA::Vec<3, float> mat_vec { 14, 32, 50 };
+        LA::Vec<3, float> vec_mat { 30, 36, 42 };
+
+        has_passed &= mat_vec == LA::dotProduct(mat, vec);
+        has_passed &= vec_mat == LA::dotProduct(vec, mat);
+    }
+
+    return has_passed;
+}
+
 consteval void testLinearAlgebra()
 {
     static_assert(testVecOps(), "Failed Vector operations");
     static_assert(testPosOps(), "Failed Position operations");
     static_assert(testRayOps(), "Failed Ray operations");
+    static_assert(testMatOps(), "Failed Matrix operations");
+    static_assert(testMatVecOps(), "Failed Matrix and Vector operations");
+    static_assert(testMatRotOps(), "Failed Matrix rotation operations");
 }
