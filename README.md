@@ -29,7 +29,7 @@ A header only Linear Algebra library implemented in modern C++.  Constexpr compa
 - **Vec**
     - dotProduct(**Vec**, **Vec**) -> **Scalar** 
     - dotProduct(**Mat**, **Vec**) -> **Vec**
-    - dotProduct(**Vec**, **Mat**) -> **Vec** [*mathematically not true but allows for preference*]
+    - dotProduct(**Vec**, **Mat**) -> **Vec** 
     - getRotatedVec3(**Vec**, **Scalar**, **Scalar**, **Scalar**) -> **Vec**
     - getReflected(**Vec**, **Vec**) -> **Vec**
     - getRefracted(**Vec**, **Vec**, **Scalar**) -> **Vec**
