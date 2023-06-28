@@ -401,7 +401,7 @@ public:
     {
         m_direction = direction.getNormalised();
     }
-    constexpr LinearAlgebra::Pos<N, T> getPointAlongRay(T t)
+    constexpr LinearAlgebra::Pos<N, T> getPointAlongRay(T t) const
     {
         Pos<N, T> point;
         for (size_t i = 0; i < N; i++) {
@@ -720,9 +720,9 @@ class Triangle3D {
 template <typename T>
 constexpr T intersectionDist(const Ray<3, T>& ray, const Sphere3D<T>& sphere)
 {
-    const auto displacement = ray.origin - sphere.center;
-    const T A = dotProduct(ray.direction, ray.direction);
-    const T B = T { 2 } * dotProduct(displacement, ray.direction);
+    const auto displacement =  static_cast<Vec<3, T>>(ray.getOrigin()) - static_cast<Vec<3, T>>(sphere.center);
+    const T A = dotProduct(ray.getDirection(), ray.getDirection());
+    const T B = T { 2 } * dotProduct(displacement, ray.getDirection());
     const T C = dotProduct(displacement, displacement) - (sphere.radius * sphere.radius);
     const T D = static_cast<T>(B * B - 4.0 * A * C);
 
