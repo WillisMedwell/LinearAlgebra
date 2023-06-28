@@ -7,7 +7,7 @@ A header only Linear Algebra library implemented in modern C++.  Constexpr compa
 - **Pos**<Size, Type>
 - **Ray**<Size, Type>
 - **Mat**<Size, Size, Type>
-- **Quat**/<Type>
+- **Quat**\<Type>
 - **Degees**
 - **Radians**
 - **Sphere3D**\<Type>
