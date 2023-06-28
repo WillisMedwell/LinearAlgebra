@@ -7,6 +7,15 @@ int main()
     if consteval {
         testLinearAlgebra();
     }
+    namespace LA = LinearAlgebra;
+    LA::Quat<float> q1 { LA::Degrees{120}, LA::Degrees{40}, LA::Degrees{20} };
+    
+    std::cout << LA::Radians{LA::Degrees{120}}.angle << " ";
+    std::cout << LA::Radians{LA::Degrees{40}}.angle << " ";
+    std::cout << LA::Radians{LA::Degrees{20}}.angle << std::endl;
+
+    std::cout << q1 << '\n';
+    std::cout << q1.getVec() <<'\n';
 
     return 0;
 }
@@ -50,7 +59,6 @@ consteval bool testVecOps()
         has_passed &= out1 == (2 * in1);
         has_passed &= out2 == (in1 / 2);
     }
-
     { // normalising, length and lengthSquared
         Vec<3> in1 { 3, 4, 0 };
         Vec<3> out1 { 0.6f, 0.8f, 0.0f };
@@ -155,7 +163,7 @@ consteval bool testMatRotOps()
 
     // Test for a 90-degree rotation around the Z-axis
     {
-        Mat<3, 3> rotMat = getRotationMat3x3<float>(0.0, 0.0, toRadians(90));
+        Mat<3, 3> rotMat = getRotationMat3x3<float>(0.0, 0.0, LinearAlgebra::Degrees(90));
         Vec<3> vec(1, 0, 0);
         Vec<3> expected_result(0, 1, 0);
         Vec<3> result = dotProduct(rotMat, vec);
@@ -164,7 +172,7 @@ consteval bool testMatRotOps()
 
     // Test for a 180-degree rotation around the Y-axis
     {
-        Mat<3, 3, float> rotMat = getRotationMat3x3<float>(0.0, toRadians(180), 0.0);
+        Mat<3, 3, float> rotMat = getRotationMat3x3<float>(0.0, LinearAlgebra::Degrees(180), 0.0);
         Vec<3, float> vec(1, 0, 0);
         Vec<3, float> expected_result(-1, 0, 0);
         Vec<3, float> result = dotProduct(rotMat, vec);
@@ -191,6 +199,37 @@ consteval bool testMatVecOps()
     return has_passed;
 }
 
+consteval bool testQuatOps()
+{
+    using namespace LinearAlgebra;
+    bool has_passed = true;
+
+    { // Test quaternion multiplication
+        Quat<float> q1(1, 2, 3, 4);
+        Quat<float> q2(5, 6, 7, 8);
+        Quat<float> expected_result(-60, 12, 30, 24);
+        Quat<float> result = q1 * q2;
+        has_passed &= result.data == expected_result.data;
+    }
+
+    {
+        // Test rotation constructor
+        // Quat<float> q1(0.2f, 0.3f, 0.4f);
+        // Quat<float> q2( 0.1262852, 0.1261165, 0.2100786, 0.9612563 );
+        // has_passed &= q1 == q2;
+    }
+
+    { // Test quaternion rotation operations
+      // Quat<float> q1(1, 0, 0, 0);
+      // Vec<3> v1(1.f, 2.f, 3.f);
+      // Quat<float> q2(1, v1);
+
+        // has_passed &= v1 == (q1 * q2).getVec();
+    }
+
+    return has_passed;
+}
+
 consteval void testLinearAlgebra()
 {
     static_assert(testVecOps(), "Failed Vector operations");
@@ -199,4 +238,5 @@ consteval void testLinearAlgebra()
     static_assert(testMatOps(), "Failed Matrix operations");
     static_assert(testMatVecOps(), "Failed Matrix and Vector operations");
     static_assert(testMatRotOps(), "Failed Matrix rotation operations");
+    static_assert(testQuatOps(), "Failed Quaternion operations");
 }

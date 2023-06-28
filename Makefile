@@ -7,5 +7,3 @@ ENABLED_WARNINGS := -Wall -Wextra -Wpedantic -Wcast-align -Wcast-qual -Wctor-dto
 
 all: 
 	$(LOCAL_DEBUG_BUILD) $(ENABLED_WARNINGS) $(DISABLED_WARNINGS) $(INC) -o app.exe $(SRC)
-
-

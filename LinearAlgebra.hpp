@@ -538,6 +538,113 @@ public:
         return os;
     }
 };
+struct Radian;
+
+struct Degrees {
+    double angle;
+    constexpr Degrees(auto degrees)
+    {
+        angle = static_cast<double>(degrees);
+    }
+};
+
+struct Radians {
+    double angle;
+    constexpr Radians(Degrees degrees)
+    {
+        constexpr double PI = 3.14159265;
+        angle = static_cast<double>(degrees.angle) * PI / 180.0;
+    }
+
+    constexpr Radians(auto radians)
+    {
+        angle = static_cast<double>(radians);
+    }
+};
+
+template <typename T = float>
+class Quat {
+private:
+    static constexpr size_t W = 0;
+    static constexpr size_t X = 1;
+    static constexpr size_t Y = 2;
+    static constexpr size_t Z = 3;
+
+public:
+    Vec<4, T> data;
+    constexpr Quat(Radians x_rotation, Radians y_rotation, Radians z_rotation)
+    {
+        T cr = LinearAlgebra::cos<T>(static_cast<T>(x_rotation.angle / 2)); // roll
+        T cp = LinearAlgebra::cos<T>(static_cast<T>(y_rotation.angle / 2)); // pitch
+        T cy = LinearAlgebra::cos<T>(static_cast<T>(z_rotation.angle / 2)); // yaw
+
+        T sr = LinearAlgebra::sin<T>(static_cast<T>(x_rotation.angle / 2)); // roll
+        T sp = LinearAlgebra::sin<T>(static_cast<T>(y_rotation.angle / 2)); // pitch
+        T sy = LinearAlgebra::sin<T>(static_cast<T>(z_rotation.angle / 2)); // yaw
+
+        data[W] = cr * cp * cy + sr * sp * sy;
+        data[X] = sr * cp * cy - cr * sp * sy;
+        data[Y] = cr * sp * cy + sr * cp * sy;
+        data[Z] = cr * cp * sy - sr * sp * cy;
+    }
+
+    constexpr Quat()
+    {
+        data[W] = 1;
+    }
+    constexpr Quat(T w, T x, T y, T z)
+    {
+        data[W] = w;
+        data[X] = x;
+        data[Y] = y;
+        data[Z] = z;
+    }
+
+    constexpr Quat(T w, Vec<3, float> vec)
+    {
+        data[W] = w;
+        data[X] = vec[0];
+        data[Y] = vec[1];
+        data[Z] = vec[2];
+    }
+
+    constexpr Quat<T> operator*(const Quat<T>& other) const
+    {
+        const auto& w1 = this->data[W];
+        const auto& x1 = this->data[X];
+        const auto& y1 = this->data[Y];
+        const auto& z1 = this->data[Z];
+        const auto& w2 = other.data[W];
+        const auto& x2 = other.data[X];
+        const auto& y2 = other.data[Y];
+        const auto& z2 = other.data[Z];
+
+        return Quat<T> {
+            w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,
+            w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
+            w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
+            w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
+        };
+    }
+    constexpr Vec<3, T> getVec() const
+    {
+        return Vec<3, T> {
+            data[X] / data[W],
+            data[Y] / data[W],
+            data[Z] / data[W],
+        };
+    }
+    constexpr bool operator==(const Quat<T>& other) const
+    {
+        return std::ranges::equal(this->data, other.data);
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Quat<T>& quat)
+    {
+        std::cout << quat.data;
+        return os;
+    }
+};
 
 template <size_t R, size_t C, size_t N, typename T>
 constexpr Vec<N, T> dotProduct(const Mat<R, C, T>& mat, const Vec<N, T>& vec)
@@ -646,25 +753,15 @@ constexpr T distance(const Pos<N, T>& pos1, const Pos<N, T>& pos2)
 }
 
 /*
-Convert degrees to radians.
-*/
-template <typename Input, typename Output = float>
-constexpr Output toRadians(Input degrees)
-{
-    static constexpr auto PI = 3.14159265;
-    return static_cast<Output>(static_cast<Output>(degrees) * PI / 180);
-}
-
-/*
 Generate the rotation Matrix with the inputs of yaw, pitch, and roll.
 (Input units are in radians).
 */
 template <typename T>
-constexpr Mat<3, 3, T> getRotationMat3x3(T x_rotation_radians, T y_rotation_radians, T z_rotation_radians)
+constexpr Mat<3, 3, T> getRotationMat3x3(Radians x_rotation_radians, Radians y_rotation_radians, Radians z_rotation_radians)
 {
-    const T x = x_rotation_radians;
-    const T y = y_rotation_radians;
-    const T z = z_rotation_radians;
+    const T x = x_rotation_radians.angle;
+    const T y = y_rotation_radians.angle;
+    const T z = z_rotation_radians.angle;
 
     namespace LA = LinearAlgebra;
 
@@ -683,14 +780,7 @@ constexpr Mat<3, 3, T> getRotationMat3x3(T x_rotation_radians, T y_rotation_radi
             { LA::sin(z), LA::cos(z), 0 },
             { 0, 0, 1 } });
 
-    return z_rot_mat * y_rot_mat * x_rot_mat;
-}
-
-template <typename T>
-Vec<3, T> getRotatedVec3(const Vec<3, T>& vec, T yaw_radians, T pitch_radians, T roll_radians)
-{
-    // Apply the rotation matrix to the input vector
-    return dotProduct(getRotationMat3x3(yaw_radians, pitch_radians, roll_radians), vec);
+    return x_rot_mat * y_rot_mat * z_rot_mat;
 }
 
 template <typename T = float>
@@ -720,7 +810,7 @@ class Triangle3D {
 template <typename T>
 constexpr T intersectionDist(const Ray<3, T>& ray, const Sphere3D<T>& sphere)
 {
-    const auto displacement =  static_cast<Vec<3, T>>(ray.getOrigin()) - static_cast<Vec<3, T>>(sphere.center);
+    const auto displacement = static_cast<Vec<3, T>>(ray.getOrigin()) - static_cast<Vec<3, T>>(sphere.center);
     const T A = dotProduct(ray.getDirection(), ray.getDirection());
     const T B = T { 2 } * dotProduct(displacement, ray.getDirection());
     const T C = dotProduct(displacement, displacement) - (sphere.radius * sphere.radius);
