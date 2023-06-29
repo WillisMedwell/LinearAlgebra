@@ -1,4 +1,4 @@
-#include "LinearAlgebra.hpp"
+#include "Math.hpp"
 
 consteval void testLinearAlgebra();
 
@@ -7,12 +7,12 @@ int main()
     if consteval {
         testLinearAlgebra();
     }
-    namespace LA = LinearAlgebra;
-    LA::Quat<float> q1 { LA::Degrees{120}, LA::Degrees{40}, LA::Degrees{20} };
+    namespace LA = Math::LinearAlgebra;
+    LA::Quat<float> q1 { Math::Degrees{120}, Math::Degrees{40}, Math::Degrees{20} };
     
-    std::cout << LA::Radians{LA::Degrees{120}}.angle << " ";
-    std::cout << LA::Radians{LA::Degrees{40}}.angle << " ";
-    std::cout << LA::Radians{LA::Degrees{20}}.angle << std::endl;
+    std::cout << Math::Radians{Math::Degrees{120}}.angle << " ";
+    std::cout << Math::Radians{Math::Degrees{40}}.angle << " ";
+    std::cout << Math::Radians{Math::Degrees{20}}.angle << std::endl;
 
     std::cout << q1 << '\n';
     std::cout << q1.getVec() <<'\n';
@@ -22,7 +22,7 @@ int main()
 
 consteval bool testVecOps()
 {
-    using namespace LinearAlgebra;
+    using namespace Math::LinearAlgebra;
     bool has_passed = true;
     { // comparisons
         Vec<10> vec1 { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -72,7 +72,7 @@ consteval bool testVecOps()
 
 consteval bool testPosOps()
 {
-    using namespace LinearAlgebra;
+    using namespace Math::LinearAlgebra;
     bool has_passed = true;
     {
         Pos<3, float> in1 { 1, 2, 3 };
@@ -81,14 +81,14 @@ consteval bool testPosOps()
         Vec<3, float> out1 { 1, 2, 3 };
         has_passed &= out1 == static_cast<Vec<3, float>>(in1);
         has_passed &= in1 == static_cast<Pos<3, float>>(out1);
-        has_passed &= 1.0f == LinearAlgebra::distance(in1, in2);
+        has_passed &= 1.0f == distance(in1, in2);
     }
     return has_passed;
 }
 
 consteval bool testMatOps()
 {
-    using namespace LinearAlgebra;
+    using namespace Math::LinearAlgebra;
     bool has_passed = true;
 
     // Initializer list constructor and access
@@ -134,13 +134,13 @@ consteval bool testMatOps()
 
 consteval bool testRayOps()
 {
-    using namespace LinearAlgebra;
+    using namespace Math::LinearAlgebra;
     bool has_passed = true;
     {
-        LinearAlgebra::Pos<3, float> origin = { 1, 2, 3 };
-        LinearAlgebra::Vec<3, float> direction = { 1, 1, 1 };
-        LinearAlgebra::Ray<3, float> ray = { origin, direction };
-        LinearAlgebra::Pos<3, float> expected = { 2.154701076f, 3.154701076f, 4.154701076f };
+        Pos<3, float> origin = { 1, 2, 3 };
+        Vec<3, float> direction = { 1, 1, 1 };
+        Ray<3, float> ray = { origin, direction };
+        Pos<3, float> expected = { 2.154701076f, 3.154701076f, 4.154701076f };
         has_passed &= origin == ray.getOrigin();
         has_passed &= direction.getNormalised() == ray.getDirection();
         has_passed &= expected == ray.getPointAlongRay(2);
@@ -150,7 +150,7 @@ consteval bool testRayOps()
 
 consteval bool testMatRotOps()
 {
-    using namespace LinearAlgebra;
+    using namespace Math::LinearAlgebra;
     bool has_passed = true;
 
     // Test for zero rotation
@@ -163,7 +163,7 @@ consteval bool testMatRotOps()
 
     // Test for a 90-degree rotation around the Z-axis
     {
-        Mat<3, 3> rotMat = getRotationMat3x3<float>(0.0, 0.0, LinearAlgebra::Degrees(90));
+        Mat<3, 3> rotMat = getRotationMat3x3<float>(0.0, 0.0, Math::Degrees(90));
         Vec<3> vec(1, 0, 0);
         Vec<3> expected_result(0, 1, 0);
         Vec<3> result = dotProduct(rotMat, vec);
@@ -172,7 +172,7 @@ consteval bool testMatRotOps()
 
     // Test for a 180-degree rotation around the Y-axis
     {
-        Mat<3, 3, float> rotMat = getRotationMat3x3<float>(0.0, LinearAlgebra::Degrees(180), 0.0);
+        Mat<3, 3, float> rotMat = getRotationMat3x3<float>(0.0, Math::Degrees(180), 0.0);
         Vec<3, float> vec(1, 0, 0);
         Vec<3, float> expected_result(-1, 0, 0);
         Vec<3, float> result = dotProduct(rotMat, vec);
@@ -184,7 +184,7 @@ consteval bool testMatRotOps()
 
 consteval bool testMatVecOps()
 {
-    namespace LA = LinearAlgebra;
+    namespace LA = Math::LinearAlgebra;
     bool has_passed = true;
     {
         LA::Mat<3, 3, float> mat({ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
@@ -201,7 +201,7 @@ consteval bool testMatVecOps()
 
 consteval bool testQuatOps()
 {
-    using namespace LinearAlgebra;
+    using namespace Math::LinearAlgebra;
     bool has_passed = true;
 
     { // Test quaternion multiplication
