@@ -7,6 +7,7 @@ int main()
     if consteval {
         testLinearAlgebra();
     }
+    
     namespace LA = Math::LinearAlgebra;
     LA::Quat<float> q1 { Math::Degrees{120}, Math::Degrees{40}, Math::Degrees{20} };
     

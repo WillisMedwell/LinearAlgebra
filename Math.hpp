@@ -1,6 +1,6 @@
 /*
     Header only library
-    Purpose: Provide a range of CONSTEXPR math utilities
+    Purpose: Provide a range of constexpr math utilities
 
     Created by: Willis Medwell
     Date: 9/6/2023
@@ -175,6 +175,49 @@ namespace Activation {
     {
         return std::exp(-(x * x));
     }
+
+    struct Linear {
+        constexpr auto operator()(const auto& x) const
+        {
+            return Math::Activation::linear(x);
+        }
+    };
+    struct ReLU {
+        constexpr auto operator()(const auto& x) const
+        {
+            return Math::Activation::reLU(x);
+        }
+    };
+    struct Heaviside {
+        constexpr auto operator()(const auto& x) const
+        {
+            return Math::Activation::heaviside(x);
+        }
+    };
+    struct Sigmoid {
+        constexpr auto operator()(const auto& x) const
+        {
+            return Math::Activation::sigmoid(x);
+        }
+    };
+    struct GELU {
+        constexpr auto operator()(const auto& x) const
+        {
+            return Math::Activation::gELU(x);
+        }
+    };
+    struct SiLU {
+        constexpr auto operator()(const auto& x) const
+        {
+            return Math::Activation::siLU(x);
+        }
+    };
+    struct Gaussian {
+        constexpr auto operator()(const auto& x) const
+        {
+            return Math::Activation::gaussian(x);
+        }
+    };
 }
 
 namespace LinearAlgebra {
@@ -894,6 +937,5 @@ namespace LinearAlgebra {
     }
 
 }
-
 
 }
