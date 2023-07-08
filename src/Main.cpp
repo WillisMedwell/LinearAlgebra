@@ -60,7 +60,7 @@ consteval bool testVecOps()
         has_passed &= out1 == (2 * in1);
         has_passed &= out2 == (in1 / 2);
     }
-    { // normalising, length and lengthSquared
+    { // normalise, length and lengthSquared
         Vec<3> in1 { 3, 4, 0 };
         Vec<3> out1 { 0.6f, 0.8f, 0.0f };
 
